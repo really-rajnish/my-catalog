@@ -36,8 +36,22 @@ services:
       # You MUST manually set this to your Spring Boot deployment URL (e.g. https://product-catalog-springboot.onrender.com)
       - key: AUTH_SERVICE_URL
         sync: false
+      - key: NODE_SERVICE_URL
+        fromService:
+          type: web
+          name: product-catalog-nodejs
+          property: url
 
-  # 3. React Frontend (Vite)
+  # 3. Node.js Microservice
+  - type: web
+    name: product-catalog-nodejs
+    env: node
+    plan: free
+    rootDir: backend/nodejs
+    buildCommand: npm install
+    startCommand: npm start
+
+  # 4. React Frontend (Vite)
   - type: web
     name: product-catalog-frontend
     env: static

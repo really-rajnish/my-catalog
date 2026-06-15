@@ -4,6 +4,7 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.auth_middleware import JWTAuthMiddleware
 from routers.auth_proxy import router as auth_router
+from routers.node_proxy import router as node_router
 
 app = FastAPI(
     title="Nexus API Gateway",
@@ -24,6 +25,7 @@ app.add_middleware(JWTAuthMiddleware)
 
 # Register auth router BEFORE general proxy
 app.include_router(auth_router)
+app.include_router(node_router, prefix="/api/v1/node")
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8081")
 
