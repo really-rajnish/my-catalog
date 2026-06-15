@@ -18,23 +18,24 @@ NODE_SERVICE_URL = get_service_url("NODE_SERVICE_HOSTPORT", 3000)
 
 async def forward_request(method: str, path: str, request: Request, headers: dict):
     url = f"{NODE_SERVICE_URL}/{path}"
+    req_body = await request.body()
     
-    # Try parsing JSON body if it exists
-    body = None
-    if method in ["POST", "PUT", "PATCH"]:
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-
+    # Strip Cloudflare and Render headers
+    clean_headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+    }
+    # Add any extra headers passed down
+    clean_headers.update({k: str(v) for k, v in headers.items()})
+    
     async with httpx.AsyncClient() as client:
         try:
             response = await client.request(
                 method=method,
                 url=url,
-                headers=headers,
-                json=body,
-                params=request.query_params,
+                content=req_body,
+                headers=clean_headers,
+                params=dict(request.query_params),
                 timeout=10.0
             )
             return JSONResponse(status_code=response.status_code, content=response.json() if response.content else None)

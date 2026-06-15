@@ -32,9 +32,10 @@ class AuthResponse(BaseModel):
 async def register(request: Request, body: RegisterRequest):
     target_url = f"{AUTH_SERVICE_URL}/auth/register"
     req_body = await request.body()
-    headers = dict(request.headers)
-    headers.pop("host", None)
-    headers.pop("origin", None)
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+    }
     
     async with httpx.AsyncClient() as client:
         response = await client.request("POST", target_url, content=req_body, headers=headers)
@@ -50,9 +51,10 @@ async def register(request: Request, body: RegisterRequest):
 async def login(request: Request, body: LoginRequest):
     target_url = f"{AUTH_SERVICE_URL}/auth/login"
     req_body = await request.body()
-    headers = dict(request.headers)
-    headers.pop("host", None)
-    headers.pop("origin", None)
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+    }
     
     try:
         async with httpx.AsyncClient() as client:
@@ -72,21 +74,23 @@ async def login(request: Request, body: LoginRequest):
 @router.api_route("/api/v1/auth/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE"], include_in_schema=False)
 async def auth_proxy(full_path: str, request: Request):
     target_url = f"{AUTH_SERVICE_URL}/auth/{full_path}"
+    req_body = await request.body()
     
-    body = await request.body()
-    headers = dict(request.headers)
-    headers.pop("host", None)
-    headers.pop("origin", None)
+    # Strip Cloudflare and Render headers to prevent 403s on internal routing
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+    }
     
-    async with httpx.AsyncClient() as client:
-        response = await client.request(
-            method=request.method,
-            url=target_url,
-            content=body,
-            headers=headers,
-            params=request.query_params
-        )
-        
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                request.method,
+                target_url,
+                content=req_body,
+                headers=headers,
+                params=dict(request.query_params)
+            )      
         resp_headers = dict(response.headers)
         for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
             resp_headers.pop(h, None)
