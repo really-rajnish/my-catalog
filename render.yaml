@@ -5,7 +5,6 @@
 databases:
   - name: product-catalog-pg
     databaseName: product_catalog
-    user: postgres
     plan: free
 
 services:
