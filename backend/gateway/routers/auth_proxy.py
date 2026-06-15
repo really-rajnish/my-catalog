@@ -96,3 +96,7 @@ async def auth_proxy(full_path: str, request: Request):
             resp_headers.pop(h, None)
             
         return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        return Response(content=err, status_code=500)
