@@ -2,11 +2,10 @@ services:
   # 1. Spring Boot Backend
   - type: web
     name: nexus-springboot-service
-    env: java
+    env: docker
     plan: free
-    rootDir: backend/springboot
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/auth-0.0.1-SNAPSHOT.jar
+    dockerContext: backend/springboot
+    dockerfilePath: backend/springboot/Dockerfile
     envVars:
       - key: SERVER_PORT
         value: 8080
