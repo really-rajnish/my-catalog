@@ -15,7 +15,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow frontend origin
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -27,8 +27,41 @@ app.add_middleware(JWTAuthMiddleware)
 app.include_router(auth_router)
 app.include_router(node_router, prefix="/api/v1/node")
 
+import asyncio
+
 auth_hostport = os.getenv("AUTH_SERVICE_HOSTPORT", "127.0.0.1:8081")
 AUTH_SERVICE_URL = f"http://{auth_hostport}"
+node_hostport = os.getenv("NODE_SERVICE_HOSTPORT", "127.0.0.1:3000")
+NODE_SERVICE_URL = f"http://{node_hostport}"
+
+@app.get("/api/v1/products/{product_id}")
+async def get_product_composed(product_id: str, request: Request):
+    target_sql_url = f"{AUTH_SERVICE_URL}/api/v1/products/{product_id}"
+    target_mongo_url = f"{NODE_SERVICE_URL}/api/v1/node/product-details/{product_id}"
+
+    headers = dict(request.headers)
+    headers.pop("host", None)
+    headers.pop("origin", None)
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        sql_req = client.get(target_sql_url, headers=headers, params=request.query_params)
+        mongo_req = client.get(target_mongo_url, headers=headers)
+        
+        sql_resp, mongo_resp = await asyncio.gather(sql_req, mongo_req, return_exceptions=True)
+        
+        if isinstance(sql_resp, Exception) or sql_resp.status_code != 200:
+            return Response(content=getattr(sql_resp, 'content', b'{"error": "Product not found"}'), status_code=getattr(sql_resp, 'status_code', 404))
+
+        sql_data = sql_resp.json()
+        mongo_data = {}
+        if not isinstance(mongo_resp, Exception) and mongo_resp.status_code == 200:
+            mongo_data = mongo_resp.json()
+            
+        composed_data = {
+            "sqlData": sql_data,
+            "mongoData": mongo_data
+        }
+        return composed_data
 
 @app.api_route("/api/v1/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
 async def api_v1_proxy(full_path: str, request: Request):

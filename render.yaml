@@ -1,81 +1,58 @@
-# Render.com Blueprint Configuration
-# This file automatically defines your PostgreSQL database, Spring Boot API, 
-# Python Gateway, and React Frontend in Render's infrastructure.
-
-databases:
-  - name: product-catalog-pg
-    databaseName: product_catalog
-    plan: free
-
 services:
-  # 1. Java Spring Boot Backend
+  # 1. Spring Boot Backend
   - type: web
-    name: product-catalog-springboot
-    env: docker
+    name: nexus-springboot-service
+    env: java
     plan: free
-    dockerContext: backend/springboot
-    dockerfilePath: backend/springboot/Dockerfile
+    rootDir: backend/springboot
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/auth-0.0.1-SNAPSHOT.jar
     envVars:
-      - key: DB_HOST
-        fromDatabase:
-          name: product-catalog-pg
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: product-catalog-pg
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: product-catalog-pg
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: product-catalog-pg
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: product-catalog-pg
-          property: password
-      # You MUST manually enter your MongoDB Atlas URI in the Render Dashboard
-      - key: MONGO_URI
-        sync: false
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: local
 
-  # 2. Python FastAPI Gateway
+  # 2. Node.js Backend
   - type: web
-    name: product-catalog-gateway
-    env: docker
-    plan: free
-    dockerContext: backend/gateway
-    dockerfilePath: backend/gateway/Dockerfile
-    envVars:
-      - key: AUTH_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: product-catalog-springboot
-          property: hostport
-      - key: NODE_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: product-catalog-nodejs
-          property: hostport
-
-  # 3. Node.js Microservice
-  - type: web
-    name: product-catalog-nodejs
+    name: nexus-node-service
     env: node
     plan: free
     rootDir: backend/nodejs
     buildCommand: npm install
     startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
 
-  # 4. React Frontend (Vite)
+  # 3. FastAPI Gateway
   - type: web
-    name: product-catalog-frontend
+    name: nexus-gateway
+    env: python
+    plan: free
+    rootDir: backend/gateway
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: AUTH_SERVICE_HOSTPORT
+        value: nexus-springboot-service.onrender.com
+      - key: NODE_SERVICE_HOSTPORT
+        value: nexus-node-service.onrender.com
+
+  # 4. React Frontend
+  - type: web
+    name: nexus-frontend
     env: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
-      # You MUST manually set this to your Python Gateway deployment URL (e.g. https://product-catalog-gateway.onrender.com)
       - key: VITE_API_BASE_URL
-        sync: false
+        value: https://nexus-gateway.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

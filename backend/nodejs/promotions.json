@@ -1,0 +1,10 @@
+[
+  {
+    "id": "1e4afb8e-bacd-4cf3-911a-d2126b02de4b",
+    "code": "SUMMER50",
+    "discountPercentage": 50,
+    "validUntil": "2026-12-31T23:59:59Z",
+    "isActive": true,
+    "createdAt": "2026-06-15T15:51:45.019Z"
+  }
+]

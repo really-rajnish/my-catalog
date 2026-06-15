@@ -23,9 +23,10 @@ services:
       - "8000:8000"
     depends_on:
       - auth-service
+      - node-service
     environment:
       - AUTH_SERVICE_URL=http://auth-service:8081
-
+      - NODE_SERVICE_HOSTPORT=node-service:3000
   auth-service:
     build:
       context: ./backend/springboot
@@ -39,6 +40,14 @@ services:
       - SPRING_DATASOURCE_PASSWORD=Rajnish@02
     depends_on:
       - postgres
+
+  node-service:
+    build:
+      context: ./backend/nodejs
+    container_name: nexus-node-service
+    restart: always
+    ports:
+      - "3000:3000"
 
 volumes:
   pgdata:

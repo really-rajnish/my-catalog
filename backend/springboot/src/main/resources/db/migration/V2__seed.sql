@@ -6,15 +6,13 @@ ALTER TABLE users DROP COLUMN IF EXISTS username;
 -- Insert missing seed users (DO NOTHING if exists because email is unique)
 INSERT INTO users (email, password_hash, role) VALUES 
 ('user@demo.com', '$2a$10$xyz', 'USER'),
-('admin@demo.com', '$2a$10$xyz', 'ADMIN')
-ON CONFLICT (email) DO NOTHING;
+('admin@demo.com', '$2a$10$xyz', 'ADMIN');
 
 -- Seed Categories
 INSERT INTO categories (name, slug, description) VALUES
 ('Smartphones', 'smartphones', 'Latest mobile phones'),
 ('Laptops', 'laptops', 'High performance computing'),
-('Audio', 'audio', 'Headphones and speakers')
-ON CONFLICT (slug) DO NOTHING;
+('Audio', 'audio', 'Headphones and speakers');
 
 -- Seed Products
 INSERT INTO products (name, brand, price, category_id, in_stock, stock_count) VALUES
