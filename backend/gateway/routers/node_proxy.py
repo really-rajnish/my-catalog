@@ -23,7 +23,7 @@ async def forward_request(method: str, path: str, request: Request, headers: dic
     # Strip Cloudflare and Render headers
     clean_headers = {
         k: v for k, v in request.headers.items() 
-        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
     }
     # Add any extra headers passed down
     clean_headers.update({k: str(v) for k, v in headers.items()})

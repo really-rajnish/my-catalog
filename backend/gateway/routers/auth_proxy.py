@@ -34,7 +34,7 @@ async def register(request: Request, body: RegisterRequest):
     req_body = await request.body()
     headers = {
         k: v for k, v in request.headers.items() 
-        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
     }
     
     async with httpx.AsyncClient() as client:
@@ -53,7 +53,7 @@ async def login(request: Request, body: LoginRequest):
     req_body = await request.body()
     headers = {
         k: v for k, v in request.headers.items() 
-        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
     }
     
     try:
@@ -77,9 +77,10 @@ async def auth_proxy(full_path: str, request: Request):
     req_body = await request.body()
     
     # Strip Cloudflare and Render headers to prevent 403s on internal routing
+    # Also strip accept-encoding so httpx auto-decompresses the response
     headers = {
         k: v for k, v in request.headers.items() 
-        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin"))
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
     }
     
     try:
