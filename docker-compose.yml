@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: product_catalog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Rajnish@02
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  gateway:
+    build:
+      context: ./backend/gateway
+    container_name: nexus-gateway
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8081
+
+  auth-service:
+    build:
+      context: ./backend/springboot
+    container_name: nexus-auth-service
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/product_catalog
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Rajnish@02
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

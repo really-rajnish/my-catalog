@@ -1,0 +1,13 @@
+.metadata/
+backend/.metadata/
+node_modules/
+target/
+venv*/
+.venv*/
+.env
+__pycache__/
+*.log
+dist/
+build/
+.idea/
+*.class

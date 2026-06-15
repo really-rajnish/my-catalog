@@ -1,0 +1,52 @@
+# Render.com Blueprint Configuration
+# This file automatically defines your PostgreSQL database, Spring Boot API, 
+# Python Gateway, and React Frontend in Render's infrastructure.
+
+databases:
+  - name: product-catalog-pg
+    databaseName: product_catalog
+    user: postgres
+    plan: free
+
+services:
+  # 1. Java Spring Boot Backend
+  - type: web
+    name: product-catalog-springboot
+    env: docker
+    plan: free
+    dockerContext: backend/springboot
+    dockerfilePath: backend/springboot/Dockerfile
+    envVars:
+      # Automatically links to the Render PostgreSQL database created above
+      - key: DATABASE_URL
+        fromDatabase:
+          name: product-catalog-pg
+          property: connectionString
+      # You MUST manually enter your MongoDB Atlas URI in the Render Dashboard
+      - key: MONGO_URI
+        sync: false
+
+  # 2. Python FastAPI Gateway
+  - type: web
+    name: product-catalog-gateway
+    env: docker
+    plan: free
+    dockerContext: backend/gateway
+    dockerfilePath: backend/gateway/Dockerfile
+    envVars:
+      # You MUST manually set this to your Spring Boot deployment URL (e.g. https://product-catalog-springboot.onrender.com)
+      - key: AUTH_SERVICE_URL
+        sync: false
+
+  # 3. React Frontend (Vite)
+  - type: web
+    name: product-catalog-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      # You MUST manually set this to your Python Gateway deployment URL (e.g. https://product-catalog-gateway.onrender.com)
+      - key: VITE_API_BASE_URL
+        sync: false
