@@ -46,15 +46,20 @@ async def login(request: Request, body: LoginRequest):
     headers.pop("host", None)
     headers.pop("origin", None)
     
-    async with httpx.AsyncClient() as client:
-        response = await client.request("POST", target_url, content=req_body, headers=headers)
-        
-        # Strip hop-by-hop and encoding headers to avoid issues with the client
-        resp_headers = dict(response.headers)
-        for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
-            resp_headers.pop(h, None)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.request("POST", target_url, content=req_body, headers=headers)
             
-        return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+            # Strip hop-by-hop and encoding headers to avoid issues with the client
+            resp_headers = dict(response.headers)
+            for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
+                resp_headers.pop(h, None)
+                
+            return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        return Response(content=err, status_code=500)
 
 @router.api_route("/api/v1/auth/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE"], include_in_schema=False)
 async def auth_proxy(full_path: str, request: Request):
