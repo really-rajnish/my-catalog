@@ -27,7 +27,8 @@ app.add_middleware(JWTAuthMiddleware)
 app.include_router(auth_router)
 app.include_router(node_router, prefix="/api/v1/node")
 
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8081")
+auth_hostport = os.getenv("AUTH_SERVICE_HOSTPORT", "127.0.0.1:8081")
+AUTH_SERVICE_URL = f"http://{auth_hostport}"
 
 @app.api_route("/api/v1/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
 async def api_v1_proxy(full_path: str, request: Request):
