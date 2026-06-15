@@ -1,7 +1,6 @@
 package auth.controller;
 
 import auth.dto.FilterRequest;
-import auth.dto.ProductDetailDTO;
 import auth.model.Product;
 import auth.service.CatalogService;
 import org.springframework.data.domain.Page;
@@ -35,22 +34,22 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDetailDTO> getProduct(@PathVariable Long id) {
-        ProductDetailDTO product = catalogService.getProductDetails(id);
+    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
+        Product product = catalogService.getProductDetails(id);
         if (product == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(product);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDetailDTO> createProduct(@RequestBody ProductDetailDTO payload) {
-        return ResponseEntity.ok(catalogService.createProduct(payload.getSqlData(), payload.getMongoData()));
+    public ResponseEntity<Product> createProduct(@RequestBody Product payload) {
+        return ResponseEntity.ok(catalogService.createProduct(payload));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDetailDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDetailDTO payload) {
-        return ResponseEntity.ok(catalogService.updateProduct(id, payload.getSqlData(), payload.getMongoData()));
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product payload) {
+        return ResponseEntity.ok(catalogService.updateProduct(id, payload));
     }
 
     @DeleteMapping("/{id}")
