@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 router = APIRouter()
 
 node_hostport = os.getenv("NODE_SERVICE_HOSTPORT", "127.0.0.1:3000")
-NODE_SERVICE_URL = f"http://{node_hostport}"
+NODE_SERVICE_URL = f"https://{node_hostport}" if "onrender.com" in node_hostport else f"http://{node_hostport}"
 
 async def forward_request(method: str, path: str, request: Request, headers: dict):
     url = f"{NODE_SERVICE_URL}/{path}"

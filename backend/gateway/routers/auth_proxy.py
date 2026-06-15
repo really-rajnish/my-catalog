@@ -5,7 +5,7 @@ import os
 
 router = APIRouter()
 auth_hostport = os.getenv("AUTH_SERVICE_HOSTPORT", "127.0.0.1:8081")
-AUTH_SERVICE_URL = f"http://{auth_hostport}"
+AUTH_SERVICE_URL = f"https://{auth_hostport}" if "onrender.com" in auth_hostport else f"http://{auth_hostport}"
 
 class LoginRequest(BaseModel):
     email: str
