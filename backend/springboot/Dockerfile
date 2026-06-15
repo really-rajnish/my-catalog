@@ -3,6 +3,7 @@ FROM maven:3.8.5-openjdk-17-slim AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
+ENV MAVEN_OPTS="-Xmx256m"
 RUN mvn clean package -DskipTests
 
 # Run stage
