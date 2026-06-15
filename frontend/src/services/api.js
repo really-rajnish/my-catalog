@@ -1,8 +1,16 @@
 import axios from 'axios';
 
 let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-if (API_BASE_URL && !API_BASE_URL.startsWith('http') && !API_BASE_URL.startsWith('/')) {
-  API_BASE_URL = `https://${API_BASE_URL}/api/v1`;
+
+if (API_BASE_URL && API_BASE_URL !== '/api/v1') {
+  if (!API_BASE_URL.includes('.onrender.com') && !API_BASE_URL.includes('localhost') && !API_BASE_URL.includes('127.0.0.1')) {
+     API_BASE_URL = API_BASE_URL.split(':')[0];
+     API_BASE_URL = `${API_BASE_URL}.onrender.com`;
+  }
+
+  if (!API_BASE_URL.startsWith('http') && !API_BASE_URL.startsWith('/')) {
+    API_BASE_URL = `https://${API_BASE_URL}/api/v1`;
+  }
 }
 export const api = axios.create({
   baseURL: API_BASE_URL,

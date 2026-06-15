@@ -4,8 +4,16 @@ import httpx
 import os
 
 router = APIRouter()
-auth_hostport = os.getenv("AUTH_SERVICE_HOSTPORT", "127.0.0.1:8081")
-AUTH_SERVICE_URL = f"https://{auth_hostport}" if "onrender.com" in auth_hostport else f"http://{auth_hostport}"
+def get_service_url(env_var, default_port):
+    raw = os.getenv(env_var, f"127.0.0.1:{default_port}")
+    host = raw.split(":")[0]
+    if host in ["127.0.0.1", "localhost"]:
+        return f"http://{host}:{default_port}"
+    if not host.endswith(".onrender.com"):
+        host += ".onrender.com"
+    return f"https://{host}"
+
+AUTH_SERVICE_URL = get_service_url("AUTH_SERVICE_HOSTPORT", 8081)
 
 class LoginRequest(BaseModel):
     email: str

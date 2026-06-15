@@ -29,10 +29,17 @@ app.include_router(node_router, prefix="/api/v1/node")
 
 import asyncio
 
-auth_hostport = os.getenv("AUTH_SERVICE_HOSTPORT", "127.0.0.1:8081")
-AUTH_SERVICE_URL = f"https://{auth_hostport}" if "onrender.com" in auth_hostport else f"http://{auth_hostport}"
-node_hostport = os.getenv("NODE_SERVICE_HOSTPORT", "127.0.0.1:3000")
-NODE_SERVICE_URL = f"https://{node_hostport}" if "onrender.com" in node_hostport else f"http://{node_hostport}"
+def get_service_url(env_var, default_port):
+    raw = os.getenv(env_var, f"127.0.0.1:{default_port}")
+    host = raw.split(":")[0]
+    if host in ["127.0.0.1", "localhost"]:
+        return f"http://{host}:{default_port}"
+    if not host.endswith(".onrender.com"):
+        host += ".onrender.com"
+    return f"https://{host}"
+
+AUTH_SERVICE_URL = get_service_url("AUTH_SERVICE_HOSTPORT", 8081)
+NODE_SERVICE_URL = get_service_url("NODE_SERVICE_HOSTPORT", 3000)
 
 @app.get("/api/v1/products/{product_id}")
 async def get_product_composed(product_id: str, request: Request):
