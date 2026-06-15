@@ -34,9 +34,15 @@ services:
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: AUTH_SERVICE_HOSTPORT
-        value: nexus-springboot-service.onrender.com
+        fromService:
+          type: web
+          name: nexus-springboot-service
+          property: hostport
       - key: NODE_SERVICE_HOSTPORT
-        value: nexus-node-service.onrender.com
+        fromService:
+          type: web
+          name: nexus-node-service
+          property: hostport
 
   # 4. React Frontend
   - type: web
@@ -47,7 +53,10 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://nexus-gateway.onrender.com
+        fromService:
+          type: web
+          name: nexus-gateway
+          property: url
     routes:
       - type: rewrite
         source: /*
