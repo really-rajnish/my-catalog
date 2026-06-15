@@ -6,7 +6,8 @@ from middleware.auth_middleware import verify_jwt_token
 
 router = APIRouter()
 
-NODE_SERVICE_URL = os.getenv("NODE_SERVICE_URL", "http://127.0.0.1:3000")
+node_hostport = os.getenv("NODE_SERVICE_HOSTPORT", "127.0.0.1:3000")
+NODE_SERVICE_URL = f"http://{node_hostport}"
 
 async def forward_request(method: str, path: str, request: Request, headers: dict):
     url = f"{NODE_SERVICE_URL}/{path}"
