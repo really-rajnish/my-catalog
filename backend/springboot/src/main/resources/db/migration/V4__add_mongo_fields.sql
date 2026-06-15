@@ -1,0 +1,7 @@
+-- V4__add_mongo_fields.sql
+
+ALTER TABLE products 
+ADD COLUMN IF NOT EXISTS description TEXT,
+ADD COLUMN IF NOT EXISTS specs JSONB,
+ADD COLUMN IF NOT EXISTS tags JSONB,
+ADD COLUMN IF NOT EXISTS embedding JSONB;
