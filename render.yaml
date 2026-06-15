@@ -56,7 +56,7 @@ services:
         fromService:
           type: web
           name: nexus-gateway
-          property: url
+          property: host
     routes:
       - type: rewrite
         source: /*
