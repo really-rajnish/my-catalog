@@ -37,15 +37,20 @@ async def register(request: Request, body: RegisterRequest):
         if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
     }
     
-    async with httpx.AsyncClient() as client:
-        response = await client.request("POST", target_url, content=req_body, headers=headers)
-        
-        # Strip hop-by-hop and encoding headers to avoid issues with the client
-        resp_headers = dict(response.headers)
-        for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
-            resp_headers.pop(h, None)
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.request("POST", target_url, content=req_body, headers=headers)
             
-        return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+            # Strip hop-by-hop and encoding headers to avoid issues with the client
+            resp_headers = dict(response.headers)
+            for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
+                resp_headers.pop(h, None)
+                
+            return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        return Response(content=err, status_code=500)
 
 @router.post("/api/v1/auth/login", response_model=AuthResponse, tags=["Authentication"])
 async def login(request: Request, body: LoginRequest):
@@ -57,7 +62,7 @@ async def login(request: Request, body: LoginRequest):
     }
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.request("POST", target_url, content=req_body, headers=headers)
             
             # Strip hop-by-hop and encoding headers to avoid issues with the client
@@ -84,7 +89,7 @@ async def auth_proxy(full_path: str, request: Request):
     }
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.request(
                 request.method,
                 target_url,

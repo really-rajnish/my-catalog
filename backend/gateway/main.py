@@ -46,53 +46,64 @@ async def get_product_composed(product_id: str, request: Request):
     target_sql_url = f"{AUTH_SERVICE_URL}/api/v1/products/{product_id}"
     target_mongo_url = f"{NODE_SERVICE_URL}/api/v1/node/product-details/{product_id}"
 
-    headers = dict(request.headers)
-    headers.pop("host", None)
-    headers.pop("origin", None)
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
+    }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        sql_req = client.get(target_sql_url, headers=headers, params=request.query_params)
-        mongo_req = client.get(target_mongo_url, headers=headers)
-        
-        sql_resp, mongo_resp = await asyncio.gather(sql_req, mongo_req, return_exceptions=True)
-        
-        if isinstance(sql_resp, Exception) or sql_resp.status_code != 200:
-            return Response(content=getattr(sql_resp, 'content', b'{"error": "Product not found"}'), status_code=getattr(sql_resp, 'status_code', 404))
-
-        sql_data = sql_resp.json()
-        mongo_data = {}
-        if not isinstance(mongo_resp, Exception) and mongo_resp.status_code == 200:
-            mongo_data = mongo_resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            sql_req = client.get(target_sql_url, headers=headers, params=request.query_params)
+            mongo_req = client.get(target_mongo_url, headers=headers)
             
-        composed_data = {
-            "sqlData": sql_data,
-            "mongoData": mongo_data
-        }
-        return composed_data
+            sql_resp, mongo_resp = await asyncio.gather(sql_req, mongo_req, return_exceptions=True)
+            
+            if isinstance(sql_resp, Exception) or sql_resp.status_code != 200:
+                return Response(content=getattr(sql_resp, 'content', b'{"error": "Product not found"}'), status_code=getattr(sql_resp, 'status_code', 404))
+
+            sql_data = sql_resp.json()
+            mongo_data = {}
+            if not isinstance(mongo_resp, Exception) and mongo_resp.status_code == 200:
+                mongo_data = mongo_resp.json()
+                
+            composed_data = {
+                "sqlData": sql_data,
+                "mongoData": mongo_data
+            }
+            return composed_data
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        return Response(content=err, status_code=500)
 
 @app.api_route("/api/v1/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
 async def api_v1_proxy(full_path: str, request: Request):
     target_url = f"{AUTH_SERVICE_URL}/api/v1/{full_path}"
     
     body = await request.body()
-    headers = dict(request.headers)
-    # Remove host header to avoid conflicts
-    headers.pop("host", None)
-    headers.pop("origin", None)
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if not k.lower().startswith(("cf-", "x-forwarded-", "x-render-", "host", "origin", "accept-encoding"))
+    }
     
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.request(
-            method=request.method,
-            url=target_url,
-            content=body,
-            headers=headers,
-            params=request.query_params
-        )
-        resp_headers = dict(response.headers)
-        for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
-            resp_headers.pop(h, None)
-            
-        return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.request(
+                method=request.method,
+                url=target_url,
+                content=body,
+                headers=headers,
+                params=request.query_params
+            )
+            resp_headers = dict(response.headers)
+            for h in ["content-encoding", "content-length", "transfer-encoding", "connection"]:
+                resp_headers.pop(h, None)
+                
+            return Response(content=response.content, status_code=response.status_code, headers=resp_headers)
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        return Response(content=err, status_code=500)
 
 from fastapi.responses import PlainTextResponse
 
